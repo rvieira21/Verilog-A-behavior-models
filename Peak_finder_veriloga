@@ -1,0 +1,67 @@
+// Peak Finder block Verilog-A code
+
+module thresh_det(in, clk, fb, outp, outn);
+
+input in, clk, fb;
+output outp, outn;
+electrical in, clk, outp, outn, fb;
+
+real fb_thresh, sh_thresh;
+real flag, maxin, minim, counter, tm;
+real peak[1:0], peak_neg[1:0];
+
+analog begin
+
+	@ (initial_step) begin
+		flag = 0;
+  tm = 0;
+  counter = -0.25
+		peak[0] = 0;
+		peak[1] = 0;
+		peak_neg[0] = 0;
+		peak_neg[1] = 0;
+		fb_thresh = 0.25;
+		sh_thresh = 0.5;
+		maxin = 0.2;
+		minim = -0.2;
+	end
+
+	@ (cross (V(fb) - fb_thresh, +1)) begin
+		flag = 1;
+	end
+
+/********* Detects the max. and min. **********/
+
+	@ (cross (V(sinu) - sh_thresh, +1)) begin
+		peak[0] = V(in);
+		peak[1] = max(peak[0], peak[1]);
+
+		peak_neg[0] = V(in);
+		peak_neg[1] = min(peak_neg[0], peak_neg[1]);
+	end
+
+	if (flag == 1) begin
+		flag = 0;
+            tm = $abstime;
+            counter = $abstime;
+	end
+
+/*********  max. and min. of each beating ********/
+
+	@ (timer (tm + 0.01)) begin
+  peak[0] = 0;
+		peak[1] = 0.25;
+		peak_neg[0] = 0;
+		peak_neg[1] = -0.25;
+        end
+        
+	if (peak[1] > 0.25 && $abstime > counter + 0.25)	
+		maxin = peak[1];
+
+	if (peak_neg[1] < -0.25 && $abstime > counter + 0.25) 
+		minim = peak_neg[1];
+
+	V(outp) <+ maxin;
+	V(outn) <+ minim;
+end
+endmodule
