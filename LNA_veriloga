@@ -1,4 +1,4 @@
-%Verilog-A code for LNA block
+// Verilog-A code for LNA block
 
 module LNA (inp, inn, outp, outn);
 input inp, inn;
