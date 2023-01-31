@@ -1,0 +1,34 @@
+% Heartbeat Detection block Verilog-A code
+
+module beat_det(in, threshp, threshn, out);
+input in, threshp, threshn;
+output out;
+electrical in, out, threshp, threshn;
+
+real th_pos, th_neg, neg, control, pulse, incr, ti_pos, ti_neg, tf_neg, tf_pos;
+
+//****** Heartbeat Detector Block ********
+analog begin
+    @(initial_step) begin
+        neg = 0;
+        control = 0;
+	end
+
+	@ (cross (V(in) - th_pos, +1)) begin
+		control = 500m;
+	end
+
+	@ (cross (V(in) - th_neg, -1)) begin
+		incr = ti_neg-tf_neg;
+		if (incr > 5m || incr == 0) neg = 1;
+	end
+
+	@ (cross (V(in) - th_neg, +1)) begin
+		control = 0;
+		neg = 0;
+	end
+
+	pulse = control * neg;
+	V(out) <+ transition (pulse, 0.1n, 0.1n, 0.1n);
+end
+endmodule
