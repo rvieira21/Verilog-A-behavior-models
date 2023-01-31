@@ -1,4 +1,4 @@
-% Heartbeat Detection block Verilog-A code
+// Heartbeat Detection block Verilog-A code
 
 module beat_det(in, threshp, threshn, out);
 input in, threshp, threshn;
