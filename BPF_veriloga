@@ -1,0 +1,30 @@
+# Verilog-A code for the BFP
+
+module BPF (inp, inn, outp, outn);
+input inp, inn;
+output outp, outn;
+electrical inp, inn, outp, outn;
+
+parameter real gain = 1.0;
+parameter real fch = 500;
+parameter real fcl = 0.05;
+real f1, f2, f0, q, ftrans;
+real den[2:0], num[1:0];
+
+analog begin 
+	@ (initial_step) begin		//biquad values
+		f1 = 2*`M_PI*fcl;
+		f2 = 2*`M_PI*fch;
+		f0 = sqrt (f1*f2);
+		q = f0/(f2-f1);
+	end
+
+ num[0] = gain;
+	num[1] = f0/q;
+	den[0] = f0*f0; 
+	den[1] = f0/q;
+	den[2] = 1.0;
+	ftrans = laplace_nd (V(inp, inn), num, den);
+	V(outp, outn) <+ ftrans;
+end
+endmodule
