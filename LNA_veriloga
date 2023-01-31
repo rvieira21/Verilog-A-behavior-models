@@ -1,0 +1,15 @@
+%Verilog-A code for LNA block
+
+module LNA (inp, inn, outp, outn);
+input inp, inn;
+output outp, outn;
+electrical inp, inn, outp, outn;
+
+parameter real gain = 1.0;
+parameter real wnoise = 1.0;
+parameter real fnoise = 1.0;
+
+analog begin
+ V(outp, outn) <+ -(V(inp, inn) + white_noise(wnoise) + flicker_noise(fnoise, 1))* gain;
+end
+endmodule
