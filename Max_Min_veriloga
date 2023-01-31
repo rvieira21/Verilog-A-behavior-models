@@ -1,0 +1,51 @@
+//Maximum & minimum block Verilog-A code
+
+module max_min_detector(in, clk, pulse, deriv, th_pos, th_neg);
+input in, clk, pulse;
+output deriv,th_pos, th_neg;
+electrical in, pulse, deriv, th_pos, th_neg, clk;
+
+real thresh, thresh_n;
+real flag, peak, sh_thresh, sh_neg, peak_neg;
+real hold[1:0], hold_neg[1:0];
+
+analog begin
+	@ (initial_step) begin
+		thresh = 250.0m;
+		thresh_n = -250m;
+		clk_down = -0.5;
+		hold[1]=0;
+		clk_up = 0.5;
+	end
+//************ S&H positive and negative ***********
+//  Max. detector	
+	@ (cross (V(clk) -  clk_up, +1)) begin	
+		hold[0]=V(in);
+		peak=max(hold[0], hold[1]);
+		hold[1] = peak;
+	end
+//  Min. detector
+	@ (cross (V(clk) - clk_down, -1)) begin		
+		hold_neg[0] = V(in);
+		peak_neg = min(hold_neg[0], hold_neg[1]);
+		hold_neg[1] = peak_neg;	
+	end	
+//Confirmation of an heartbeat
+	@ (cross (pulse - 30m, -1)) begin		
+		flag = 50m;
+	end
+//Threshold update
+	if (flag == 50m) begin
+		thresh = 3*peak/4;
+		thresh_n = 3*peak_neg/4;
+//Reset
+		hold[0] = 0; 
+		hold[1] = 0;
+		hold_neg[0] = 0;
+		hold_neg[1] = 0;
+		flag=0;
+	end
+    V(th_pos) <+ transition(thresh);
+    V(th_neg) <+ transition (thresh_n);
+end
+endmodule
