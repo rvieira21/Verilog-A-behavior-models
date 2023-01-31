@@ -1,4 +1,4 @@
-% Verilog-A code for the BFP
+// Verilog-A code for the BFP
 
 module BPF (inp, inn, outp, outn);
 input inp, inn;
