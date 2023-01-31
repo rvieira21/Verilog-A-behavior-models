@@ -1,0 +1,65 @@
+% Adaptive Threshold block Verilog-A code
+
+module adaptive_th(in, pulse, th_pos, th_neg);
+input in, pulse;
+output th_pos, th_neg;
+electrical in, pulse, th_pos, th_neg;
+
+real thresh;
+real thresh_n, count, ti_pos, tf_pos, ti_neg, tf_neg;
+real pw_pos[1:0], pw_neg [1:0];
+
+analog begin
+	@ (initial_step) begin
+		thresh = 350m;
+		thresh_n = -300m;
+		count = 1.0;
+	end
+
+//ti and tf are used to determine
+	@ (cross (V(in) - thresh, +1)) begin
+		ti_pos =$abstime;		
+	end
+	@ (cross (V(in) - thresh, -1)) begin
+		tf_pos =$abstime;
+	end
+	@ (cross (V(in) - thresh_n, -1)) begin
+		ti_neg =$abstime;
+	end
+	@ (cross (V(in) - thresh_n, +1)) begin
+		tf_neg = $abstime;
+	end
+
+	@ (cross (pulse - 300m, -1)) begin
+ //Reference pulse-width
+		if(count == 1) begin		
+			pw_pos[0] = tf_pos-ti_pos;
+			pw_neg[0] = tf_neg-ti_neg;
+			pw_pos[1] = pw_pos[0];
+			pw_neg[1] = pw_neg[0];
+		end
+		else begin	
+		//Next pulse-widths
+			pw_pos[1] = tf_pos-ti_pos;
+			pw_neg[1] = tf_neg-ti_neg;
+		end
+		count = 0;
+//positive pulse_width comparison and update
+		if (pw_pos[0] != pw_pos[1]) begin
+			if(pw_pos[1] > pw_pos[0]) 
+				thresh = thresh + (pw_pos[1]-pw_pos[0])*7; 
+			if(pw_pos[1] < pw_pos[0]) 
+				thresh = thresh - (pw_pos[0]-pw_pos[1])*7;
+		end
+//negative pulse_width comparison and update
+		if(pw_neg[0] != pw_neg[1]) begin
+			if(pw_neg[1] > pw_neg[0]) 
+				thresh_n = thresh_n - (pw_neg[1]-pw_neg[0])*7;
+			if(pw_neg[1] < pw_neg[0]) 
+				thresh_n = thresh_n + (pw_neg[0]-pw_neg[1])*7;
+		end
+	end
+	V(th_pos) <+ transition(thresh, 0.1n, 0.1n, 0.1n);
+	V(th_neg) <+ transition (thresh_n, 0.1n, 0.1n, 0.1n);
+end
+endmodule
