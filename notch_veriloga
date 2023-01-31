@@ -1,0 +1,28 @@
+% Verilog-A code for the notch filter
+
+module notch (inp, inn, outp, outn);
+input inp, inn;
+output outp, outn;
+electrical inn, inp, outp, outn;
+
+parameter real gain= 1.0;
+parameter real qualityfactor= 10;
+parameter real fc= 60;
+real den[2:0], num[2:0];
+real f0, ftrans;
+
+analog begin
+	@ (initial_step) begin
+		f0= 2*`M_PI*fc;
+	end
+	
+	num[0] = f0*f0*gain;
+	num[1] = 0;
+	num[2] = gain;
+	den[0] = f0*f0; 
+	den[1] = f0/qualityfactor;
+	den[2] = 1.0;
+	ftrans = laplace_nd (V(inp, inn), num, den);
+	V(outp, outn) <+ ftrans;
+end
+endmodule
