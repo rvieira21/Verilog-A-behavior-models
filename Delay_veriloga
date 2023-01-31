@@ -1,0 +1,42 @@
+//Delay block Verilog-A code
+
+module delay(in, clk, out);
+input in, clk; output out;
+electrical in, out, clk;
+
+real th, flag, ph;
+integer k, i;
+real hold[0:20];
+
+analog begin
+	@ (initial_step) begin
+		hold[0]=0;
+		th=0.5;
+		k=0;	
+		flag=0;
+		i=4;
+	end
+	ph= absdelay(V(clk), 1m);
+	hold[0]=V(in);
+
+	@ (cross (V(clk) - th, +1)) begin
+		k=0;
+		while (k<20) begin
+			if(k%2==0) begin
+				hold[k+1] = hold[k];
+			end	
+			k=k+1;
+		end
+	end
+	@ (cross (ph - th, +1))begin
+		k=0;
+		while(k<20)begin
+			if(k%2!=0)begin
+				hold[k+1]=hold[k];
+			end
+			k=k+1;
+		end
+	end
+	V(out) <+ transition(hold[20], 0.1n, 0.1n, 0.1n);
+end
+endmodule
